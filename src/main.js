@@ -5,6 +5,9 @@ import peaActions from './actions-pea.json'
 
 const app = document.querySelector('#app')
 const combinedData = [...etfData, ...peaActions, ...peaPmeActions]
+  .filter((item, index, array) =>
+    index === array.findIndex((entry) => entry.symbol === item.symbol)
+  )
 
 const favoritesOptions = combinedData
   .map((item) => {

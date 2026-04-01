@@ -210,6 +210,27 @@ h1 {
   flex-wrap: wrap;
 }
 
+.favorites-load {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.favorites-load button {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.favorites-load button.ghost {
+  background: #e9eef6;
+  color: var(--text);
+}
+
 .favorite-chip {
   display: inline-flex;
   align-items: center;

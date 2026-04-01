@@ -71,6 +71,10 @@ app.innerHTML = `
           <button id="clearFavorites" type="button" class="ghost">Vider</button>
         </div>
         <div id="favoritesList" class="favorites-list"></div>
+        <div class="favorites-load">
+          <button id="loadFavorites" type="button">Charger favoris</button>
+          <button id="loadAll" type="button" class="ghost">Charger tous</button>
+        </div>
       </div>
 
       <div class="status" id="status"></div>
@@ -125,7 +129,9 @@ const elements = {
   favoriteSearch: document.querySelector('#favoriteSearch'),
   addFavorite: document.querySelector('#addFavorite'),
   clearFavorites: document.querySelector('#clearFavorites'),
-  favoritesList: document.querySelector('#favoritesList')
+  favoritesList: document.querySelector('#favoritesList'),
+  loadFavorites: document.querySelector('#loadFavorites'),
+  loadAll: document.querySelector('#loadAll')
 }
 
 const API_BASE = 'https://pea-etf-proxy.vercel.app'
@@ -241,6 +247,13 @@ const render = () => {
     )
   })
 
+  list.sort((a, b) => {
+    const aFav = state.favorites.includes(a.symbol)
+    const bFav = state.favorites.includes(b.symbol)
+    if (aFav === bFav) return 0
+    return aFav ? -1 : 1
+  })
+
   elements.count.textContent = `${list.length} ETF` +
     (query ? ` (filtré)` : '')
 
@@ -349,23 +362,8 @@ const loadAll = async () => {
 
   try {
     state.etfs = await fetchPeaList()
-    const favorites = state.favorites
-    const favoriteSymbols = state.etfs
-      .filter((item) => favorites.includes(item.symbol))
-      .map((item) => item.symbol)
-
-    if (favoriteSymbols.length > 0) {
-      setStatus(`Chargement des cours pour ${favoriteSymbols.length} favoris…`)
-      render()
-      await fetchQuotes(favoriteSymbols)
-    }
-
-    state.lastUpdated = new Date()
-    setStatus(
-      favoriteSymbols.length > 0
-        ? 'Favoris à jour. Charger tout pour le reste.'
-        : `Prêt. Charger les cours si besoin.`
-    )
+    state.lastUpdated = null
+    setStatus('Prêt. Sélectionne tes favoris et charge les cours.', 'info')
   } catch (error) {
     state.error = error
     setStatus(error.message || 'Une erreur est survenue.', 'error')
@@ -393,6 +391,29 @@ elements.refreshBtn.addEventListener('click', () => {
   })
 })
 
+const loadFavoriteQuotes = () => {
+  const favoriteSymbols = state.etfs
+    .filter((item) => state.favorites.includes(item.symbol))
+    .map((item) => item.symbol)
+  if (favoriteSymbols.length === 0) {
+    setStatus('Ajoute des favoris pour charger leurs cours.', 'error')
+    return
+  }
+  setStatus(`Chargement des cours pour ${favoriteSymbols.length} favoris…`)
+  fetchQuotes(favoriteSymbols).then(() => {
+    state.lastUpdated = new Date()
+    setStatus('Favoris à jour.', 'success')
+  })
+}
+
+const loadAllQuotes = () => {
+  if (state.etfs.length === 0) return
+  setStatus(`Chargement des cours pour ${state.etfs.length} ETF…`)
+  fetchQuotes(state.etfs.map((item) => item.symbol)).then(() => {
+    state.lastUpdated = new Date()
+    setStatus('Cours à jour.', 'success')
+  })
+}
 elements.autoRefresh.addEventListener('change', (event) => {
   state.autoRefresh = event.target.checked
   scheduleRefresh()
@@ -415,10 +436,30 @@ if (elements.addFavorite) {
   })
 }
 
+if (elements.favoriteSearch) {
+  elements.favoriteSearch.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      const value = elements.favoriteSearch.value.trim().toUpperCase()
+      if (!value) return
+      toggleFavorite(value)
+      elements.favoriteSearch.value = ''
+    }
+  })
+}
+
 if (elements.clearFavorites) {
   elements.clearFavorites.addEventListener('click', () => {
     state.favorites = []
     saveFavorites()
     render()
   })
+}
+
+if (elements.loadFavorites) {
+  elements.loadFavorites.addEventListener('click', loadFavoriteQuotes)
+}
+
+if (elements.loadAll) {
+  elements.loadAll.addEventListener('click', loadAllQuotes)
 }

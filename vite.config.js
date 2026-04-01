@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  base: '/pea-etf-live-app/',
   server: {
     proxy: {
       '/api/bourso': {

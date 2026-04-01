@@ -90,7 +90,7 @@ const elements = {
   updated: document.querySelector('#updated')
 }
 
-const API_BASE = '/api/bourso'
+const API_BASE = 'https://pea-etf-proxy.vercel.app'
 
 const decodeEntities = (value) => {
   const textarea = document.createElement('textarea')

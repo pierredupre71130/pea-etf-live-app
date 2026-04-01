@@ -1,8 +1,11 @@
 import './style.css'
 import etfData from './etf-data.json'
+import actionsData from './actions-peapme.json'
 
 const app = document.querySelector('#app')
-const favoritesOptions = etfData
+const combinedData = [...etfData, ...actionsData]
+
+const favoritesOptions = combinedData
   .map((item) => {
     const label = `${item.ticker || item.symbol} — ${item.name}`
     return `<option value="${item.ticker || item.symbol}">${label}</option>`
@@ -56,7 +59,7 @@ app.innerHTML = `
       <div class="favorites-panel">
         <div>
           <p class="favorites-title">Choisir des favoris</p>
-          <p class="favorites-sub">Sélectionne un ETF puis ajoute-le à ta liste.</p>
+          <p class="favorites-sub">Sélectionne un ETF ou une action puis ajoute-le à ta liste.</p>
         </div>
         <div class="favorites-actions">
           <input
@@ -185,9 +188,9 @@ const saveFavorites = () => {
 
 const normalizeSymbol = (value) => {
   if (!value) return ''
-  const direct = etfData.find((item) => item.symbol === value)
+  const direct = combinedData.find((item) => item.symbol === value)
   if (direct) return direct.symbol
-  const byTicker = etfData.find((item) => item.ticker === value)
+  const byTicker = combinedData.find((item) => item.ticker === value)
   if (byTicker) return byTicker.symbol
   return value
 }
@@ -273,6 +276,10 @@ const render = () => {
       const variationClass =
         variation > 0 ? 'up' : variation < 0 ? 'down' : 'flat'
 
+      const href = item.type === 'stock'
+        ? `https://www.boursorama.com/cours/${item.symbol}/`
+        : `https://www.boursorama.com${item.href}`
+
       return `
         <tr>
           <td>${item.ticker || '—'}</td>
@@ -287,7 +294,7 @@ const render = () => {
           <td>${item.symbol}</td>
           <td>${item.isin || '—'}</td>
           <td>${quote ? formatTime(quote.tradeDate) : '—'}</td>
-          <td><a href="https://www.boursorama.com${item.href}" target="_blank" rel="noreferrer">Voir</a></td>
+          <td><a href="${href}" target="_blank" rel="noreferrer">Voir</a></td>
         </tr>
       `
     })
@@ -331,7 +338,7 @@ const render = () => {
 }
 
 const fetchPeaList = async () => {
-  return etfData
+  return combinedData
 }
 
 const extractQuote = (html, symbol) => {
@@ -439,7 +446,7 @@ const loadFavoriteQuotes = () => {
 
 const loadAllQuotes = () => {
   if (state.etfs.length === 0) return
-  setStatus(`Chargement des cours pour ${state.etfs.length} ETF…`)
+  setStatus(`Chargement des cours pour ${state.etfs.length} instruments…`)
   fetchQuotes(state.etfs.map((item) => item.symbol)).then(() => {
     state.lastUpdated = new Date()
     setStatus('Cours à jour.', 'success')

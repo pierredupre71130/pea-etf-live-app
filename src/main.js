@@ -59,10 +59,14 @@ app.innerHTML = `
           <p class="favorites-sub">Sélectionne un ETF puis ajoute-le à ta liste.</p>
         </div>
         <div class="favorites-actions">
-          <select id="favoritePicker">
-            <option value="">— Sélectionner un ETF —</option>
+          <input
+            id="favoriteSearch"
+            list="favoriteOptions"
+            placeholder="Ticker (ex: WPEA)"
+          />
+          <datalist id="favoriteOptions">
             ${favoritesOptions}
-          </select>
+          </datalist>
           <button id="addFavorite" type="button">Ajouter</button>
           <button id="clearFavorites" type="button" class="ghost">Vider</button>
         </div>
@@ -118,7 +122,7 @@ const elements = {
   count: document.querySelector('#count'),
   updated: document.querySelector('#updated'),
   favoritesOnly: document.querySelector('#favoritesOnly'),
-  favoritePicker: document.querySelector('#favoritePicker'),
+  favoriteSearch: document.querySelector('#favoriteSearch'),
   addFavorite: document.querySelector('#addFavorite'),
   clearFavorites: document.querySelector('#clearFavorites'),
   favoritesList: document.querySelector('#favoritesList')
@@ -404,10 +408,10 @@ scheduleRefresh()
 
 if (elements.addFavorite) {
   elements.addFavorite.addEventListener('click', () => {
-    const value = elements.favoritePicker.value
+    const value = elements.favoriteSearch.value.trim().toUpperCase()
     if (!value) return
     toggleFavorite(value)
-    elements.favoritePicker.value = ''
+    elements.favoriteSearch.value = ''
   })
 }
 

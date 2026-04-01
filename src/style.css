@@ -180,12 +180,13 @@ h1 {
   align-items: center;
 }
 
-.favorites-actions select {
+.favorites-actions input {
   height: 38px;
   border-radius: 8px;
   border: 1px solid var(--border);
   padding: 0 10px;
   font-size: 13px;
+  background: #fff;
 }
 
 .favorites-actions button {

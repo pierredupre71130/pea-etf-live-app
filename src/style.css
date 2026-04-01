@@ -180,6 +180,10 @@ h1 {
   align-items: center;
 }
 
+.favorites-input {
+  position: relative;
+}
+
 .favorites-actions input {
   height: 38px;
   border-radius: 8px;
@@ -187,6 +191,35 @@ h1 {
   padding: 0 10px;
   font-size: 13px;
   background: #fff;
+  min-width: 220px;
+}
+
+.favorites-suggestions {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(20, 30, 60, 0.12);
+  z-index: 5;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.favorites-suggestions button {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.favorites-suggestions button:hover {
+  background: #f3f6ff;
 }
 
 .favorites-actions button {

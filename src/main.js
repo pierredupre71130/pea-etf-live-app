@@ -63,14 +63,14 @@ app.innerHTML = `
           <p class="favorites-sub">Sélectionne un ETF ou une action puis ajoute-le à ta liste.</p>
         </div>
         <div class="favorites-actions">
-          <input
-            id="favoriteSearch"
-            list="favoriteOptions"
-            placeholder="Ticker (ex: WPEA)"
-          />
-          <datalist id="favoriteOptions">
-            ${favoritesOptions}
-          </datalist>
+          <div class="favorites-input">
+            <input
+              id="favoriteSearch"
+              placeholder="Ticker (ex: WPEA)"
+              autocomplete="off"
+            />
+            <div id="favoriteSuggestions" class="favorites-suggestions"></div>
+          </div>
           <button id="addFavorite" type="button">Ajouter</button>
           <button id="clearFavorites" type="button" class="ghost">Vider</button>
         </div>
@@ -137,7 +137,8 @@ const elements = {
   favoritesList: document.querySelector('#favoritesList'),
   loadFavorites: document.querySelector('#loadFavorites'),
   loadAll: document.querySelector('#loadAll'),
-  cardsContainer: document.querySelector('#cardsContainer')
+  cardsContainer: document.querySelector('#cardsContainer'),
+  favoriteSuggestions: document.querySelector('#favoriteSuggestions')
 }
 
 const API_BASE = 'https://pea-etf-proxy.vercel.app'
@@ -475,7 +476,37 @@ if (elements.addFavorite) {
   })
 }
 
+const renderFavoriteSuggestions = (query) => {
+  if (!elements.favoriteSuggestions) return
+  const normalized = query.trim().toUpperCase()
+  if (normalized.length === 0) {
+    elements.favoriteSuggestions.innerHTML = ''
+    return
+  }
+  const matches = combinedData
+    .filter((item) => (item.ticker || '').startsWith(normalized))
+    .slice(0, 8)
+
+  elements.favoriteSuggestions.innerHTML = matches
+    .map((item) => {
+      const label = `${item.ticker || item.symbol} — ${item.name}`
+      return `<button type="button" data-value="${item.ticker || item.symbol}">${label}</button>`
+    })
+    .join('')
+
+  elements.favoriteSuggestions.querySelectorAll('button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      toggleFavorite(btn.dataset.value)
+      elements.favoriteSearch.value = ''
+      elements.favoriteSuggestions.innerHTML = ''
+    })
+  })
+}
+
 if (elements.favoriteSearch) {
+  elements.favoriteSearch.addEventListener('input', (event) => {
+    renderFavoriteSuggestions(event.target.value)
+  })
   elements.favoriteSearch.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
       event.preventDefault()
@@ -483,6 +514,7 @@ if (elements.favoriteSearch) {
       if (!value) return
       toggleFavorite(value)
       elements.favoriteSearch.value = ''
+      elements.favoriteSuggestions.innerHTML = ''
     }
   })
 }

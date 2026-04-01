@@ -363,25 +363,28 @@ const extractQuote = (html, symbol) => {
   return null
 }
 
-const fetchQuote = async (symbol) => {
-  const response = await fetch(`${API_BASE}/bourse/trackers/cours/${symbol}/`)
+const fetchQuote = async (item) => {
+  const path = item.type === 'stock'
+    ? `/cours/${item.symbol}/`
+    : `/bourse/trackers/cours/${item.symbol}/`
+  const response = await fetch(`${API_BASE}${path}`)
   if (!response.ok) {
-    throw new Error(`Impossible de charger ${symbol}`)
+    throw new Error(`Impossible de charger ${item.symbol}`)
   }
   const html = await response.text()
-  const quote = extractQuote(html, symbol)
+  const quote = extractQuote(html, item.symbol)
   if (!quote) {
-    throw new Error(`Données manquantes pour ${symbol}`)
+    throw new Error(`Données manquantes pour ${item.symbol}`)
   }
   return quote
 }
 
-const fetchQuotes = async (symbols) => {
+const fetchQuotes = async (items) => {
   const batchSize = 6
-  for (let index = 0; index < symbols.length; index += batchSize) {
-    const batch = symbols.slice(index, index + batchSize)
+  for (let index = 0; index < items.length; index += batchSize) {
+    const batch = items.slice(index, index + batchSize)
     const results = await Promise.allSettled(
-      batch.map((symbol) => fetchQuote(symbol))
+      batch.map((item) => fetchQuote(item))
     )
 
     results.forEach((result) => {
@@ -426,23 +429,22 @@ const scheduleRefresh = () => {
 elements.refreshBtn.addEventListener('click', () => {
   if (state.etfs.length === 0) return
   setStatus(`Chargement des cours pour ${state.etfs.length} ETF…`)
-  fetchQuotes(state.etfs.map((item) => item.symbol)).then(() => {
+  fetchQuotes(state.etfs).then(() => {
     state.lastUpdated = new Date()
     setStatus('Cours à jour.', 'success')
   })
 })
 
 const loadFavoriteQuotes = () => {
-  const favoriteSymbols = state.etfs
+  const favoriteItems = state.etfs
     .filter((item) => state.favorites.includes(item.symbol))
-    .map((item) => item.symbol)
-  if (favoriteSymbols.length === 0) {
+  if (favoriteItems.length === 0) {
     setStatus('Ajoute des favoris pour charger leurs cours.', 'error')
     return
   }
   elements.favoritesOnly.checked = true
-  setStatus(`Chargement des cours pour ${favoriteSymbols.length} favoris…`)
-  fetchQuotes(favoriteSymbols).then(() => {
+  setStatus(`Chargement des cours pour ${favoriteItems.length} favoris…`)
+  fetchQuotes(favoriteItems).then(() => {
     state.lastUpdated = new Date()
     setStatus('Favoris à jour.', 'success')
     render()
@@ -452,7 +454,7 @@ const loadFavoriteQuotes = () => {
 const loadAllQuotes = () => {
   if (state.etfs.length === 0) return
   setStatus(`Chargement des cours pour ${state.etfs.length} instruments…`)
-  fetchQuotes(state.etfs.map((item) => item.symbol)).then(() => {
+  fetchQuotes(state.etfs).then(() => {
     state.lastUpdated = new Date()
     setStatus('Cours à jour.', 'success')
   })

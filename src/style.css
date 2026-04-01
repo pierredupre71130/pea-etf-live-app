@@ -142,6 +142,19 @@ h1 {
   color: var(--muted);
 }
 
+.favorite-btn {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 16px;
+  margin-right: 6px;
+}
+
+.favorite-btn:hover {
+  opacity: 0.8;
+}
+
 .meta {
   display: flex;
   flex-direction: column;

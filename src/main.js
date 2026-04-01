@@ -34,6 +34,10 @@ app.innerHTML = `
             <input id="tickerMode" type="checkbox" />
             Mode ticker
           </label>
+          <label class="toggle-inline">
+            <input id="favoritesOnly" type="checkbox" />
+            Favoris seulement
+          </label>
         </div>
         <div class="meta">
           <span id="count"></span>
@@ -76,7 +80,8 @@ const state = {
   loading: false,
   error: null,
   lastUpdated: null,
-  autoRefresh: true
+  autoRefresh: true,
+  favorites: []
 }
 
 const elements = {
@@ -87,7 +92,8 @@ const elements = {
   status: document.querySelector('#status'),
   tableBody: document.querySelector('#tableBody'),
   count: document.querySelector('#count'),
-  updated: document.querySelector('#updated')
+  updated: document.querySelector('#updated'),
+  favoritesOnly: document.querySelector('#favoritesOnly')
 }
 
 const API_BASE = 'https://pea-etf-proxy.vercel.app'
@@ -122,6 +128,31 @@ const formatTime = (value) => {
   }).format(date)
 }
 
+const FAVORITES_KEY = 'pea_etf_favorites'
+
+const loadFavorites = () => {
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY)
+    state.favorites = raw ? JSON.parse(raw) : []
+  } catch (error) {
+    state.favorites = []
+  }
+}
+
+const saveFavorites = () => {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(state.favorites))
+}
+
+const toggleFavorite = (symbol) => {
+  if (state.favorites.includes(symbol)) {
+    state.favorites = state.favorites.filter((item) => item !== symbol)
+  } else {
+    state.favorites = [...state.favorites, symbol]
+  }
+  saveFavorites()
+  render()
+}
+
 const setStatus = (message, tone = 'info') => {
   elements.status.textContent = message
   elements.status.dataset.tone = tone
@@ -130,7 +161,9 @@ const setStatus = (message, tone = 'info') => {
 const render = () => {
   const query = elements.searchInput.value.trim().toLowerCase()
   const tickerOnly = elements.tickerMode.checked
+  const favoritesOnly = elements.favoritesOnly.checked
   const list = state.etfs.filter((item) => {
+    if (favoritesOnly && !state.favorites.includes(item.symbol)) return false
     if (!query) return true
     if (tickerOnly) {
       return item.ticker.toLowerCase().startsWith(query)
@@ -162,7 +195,12 @@ const render = () => {
 
       return `
         <tr>
-          <td>${item.name}</td>
+          <td>
+            <button class="favorite-btn" data-symbol="${item.symbol}" aria-label="Favori">
+              ${state.favorites.includes(item.symbol) ? '★' : '☆'}
+            </button>
+            ${item.name}
+          </td>
           <td>${item.symbol}</td>
           <td>${item.ticker || '—'}</td>
           <td>${item.isin || '—'}</td>
@@ -174,6 +212,13 @@ const render = () => {
       `
     })
     .join('')
+
+  document.querySelectorAll('.favorite-btn').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      const symbol = event.currentTarget.dataset.symbol
+      toggleFavorite(symbol)
+    })
+  })
 }
 
 const fetchPeaList = async () => {
@@ -237,12 +282,23 @@ const loadAll = async () => {
 
   try {
     state.etfs = await fetchPeaList()
-    setStatus(`Chargement des cours pour ${state.etfs.length} ETF…`)
-    render()
+    const favorites = state.favorites
+    const favoriteSymbols = state.etfs
+      .filter((item) => favorites.includes(item.symbol))
+      .map((item) => item.symbol)
 
-    await fetchQuotes(state.etfs.map((item) => item.symbol))
+    if (favoriteSymbols.length > 0) {
+      setStatus(`Chargement des cours pour ${favoriteSymbols.length} favoris…`)
+      render()
+      await fetchQuotes(favoriteSymbols)
+    }
+
     state.lastUpdated = new Date()
-    setStatus('Cours à jour.', 'success')
+    setStatus(
+      favoriteSymbols.length > 0
+        ? 'Favoris à jour. Charger tout pour le reste.'
+        : `Prêt. Charger les cours si besoin.`
+    )
   } catch (error) {
     state.error = error
     setStatus(error.message || 'Une erreur est survenue.', 'error')
@@ -261,7 +317,14 @@ const scheduleRefresh = () => {
   }, 30000)
 }
 
-elements.refreshBtn.addEventListener('click', () => loadAll())
+elements.refreshBtn.addEventListener('click', () => {
+  if (state.etfs.length === 0) return
+  setStatus(`Chargement des cours pour ${state.etfs.length} ETF…`)
+  fetchQuotes(state.etfs.map((item) => item.symbol)).then(() => {
+    state.lastUpdated = new Date()
+    setStatus('Cours à jour.', 'success')
+  })
+})
 
 elements.autoRefresh.addEventListener('change', (event) => {
   state.autoRefresh = event.target.checked
@@ -270,6 +333,8 @@ elements.autoRefresh.addEventListener('change', (event) => {
 
 elements.searchInput.addEventListener('input', () => render())
 elements.tickerMode.addEventListener('change', () => render())
+elements.favoritesOnly.addEventListener('change', () => render())
 
+loadFavorites()
 loadAll()
 scheduleRefresh()

@@ -177,7 +177,7 @@
   },
   {
     "symbol": "1rPAYV",
-    "name": "AYVENS (ex ALD)",
+    "name": "AYVENS (EX ALD)",
     "href": "/cours/1rPAYV/",
     "isin": "FR0013258662",
     "ticker": "AYV",
@@ -545,7 +545,7 @@
   },
   {
     "symbol": "1rPENX",
-    "name": "EURONEXT",
+    "name": "EURONEXT,",
     "href": "/cours/1rPENX/",
     "isin": "NL0006294274",
     "ticker": "ENX",
@@ -1001,7 +1001,7 @@
   },
   {
     "symbol": "1rPPVL",
-    "name": "PLASTiVALOIRE",
+    "name": "PLASTIVALOIRE",
     "href": "/cours/1rPPVL/",
     "isin": "FR0013252186",
     "ticker": "PVL",

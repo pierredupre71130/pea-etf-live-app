@@ -3,10 +3,10 @@ import etfData from './etf-data.json'
 
 const app = document.querySelector('#app')
 const favoritesOptions = etfData
-  .map(
-    (item) =>
-      `<option value="${item.ticker || item.symbol}">${item.name}</option>`
-  )
+  .map((item) => {
+    const label = `${item.ticker || item.symbol} — ${item.name}`
+    return `<option value="${item.ticker || item.symbol}">${label}</option>`
+  })
   .join('')
 
 app.innerHTML = `

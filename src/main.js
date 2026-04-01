@@ -1,9 +1,10 @@
 import './style.css'
 import etfData from './etf-data.json'
-import actionsData from './actions-peapme.json'
+import peaPmeActions from './actions-peapme.json'
+import peaActions from './actions-pea.json'
 
 const app = document.querySelector('#app')
-const combinedData = [...etfData, ...actionsData]
+const combinedData = [...etfData, ...peaActions, ...peaPmeActions]
 
 const favoritesOptions = combinedData
   .map((item) => {

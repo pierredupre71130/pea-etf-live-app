@@ -134,12 +134,102 @@ h1 {
   font-size: 14px;
 }
 
+.filters {
+  display: inline-flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .toggle-inline {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 12px;
   color: var(--muted);
+}
+
+.favorites-panel {
+  margin: 16px 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #f9fafc;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.favorites-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.favorites-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.favorites-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.favorites-actions select {
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.favorites-actions button {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.favorites-actions button.ghost {
+  background: #e9eef6;
+  color: var(--text);
+}
+
+.favorites-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.favorite-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(31, 111, 255, 0.12);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.favorite-chip button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.favorite-chip button:hover {
+  color: var(--danger);
 }
 
 .favorite-btn {

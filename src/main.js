@@ -2,6 +2,12 @@ import './style.css'
 import etfData from './etf-data.json'
 
 const app = document.querySelector('#app')
+const favoritesOptions = etfData
+  .map(
+    (item) =>
+      `<option value="${item.ticker || item.symbol}">${item.name}</option>`
+  )
+  .join('')
 
 app.innerHTML = `
   <div class="app">
@@ -30,19 +36,37 @@ app.innerHTML = `
             type="search"
             placeholder="Rechercher un ETF (nom, code, ISIN, ticker)"
           />
-          <label class="toggle-inline">
-            <input id="tickerMode" type="checkbox" />
-            Mode ticker
-          </label>
-          <label class="toggle-inline">
-            <input id="favoritesOnly" type="checkbox" />
-            Favoris seulement
-          </label>
+          <div class="filters">
+            <label class="toggle-inline">
+              <input id="tickerMode" type="checkbox" />
+              Mode ticker
+            </label>
+            <label class="toggle-inline">
+              <input id="favoritesOnly" type="checkbox" />
+              Favoris seulement
+            </label>
+          </div>
         </div>
         <div class="meta">
           <span id="count"></span>
           <span id="updated"></span>
         </div>
+      </div>
+
+      <div class="favorites-panel">
+        <div>
+          <p class="favorites-title">Choisir des favoris</p>
+          <p class="favorites-sub">Sélectionne un ETF puis ajoute-le à ta liste.</p>
+        </div>
+        <div class="favorites-actions">
+          <select id="favoritePicker">
+            <option value="">— Sélectionner un ETF —</option>
+            ${favoritesOptions}
+          </select>
+          <button id="addFavorite" type="button">Ajouter</button>
+          <button id="clearFavorites" type="button" class="ghost">Vider</button>
+        </div>
+        <div id="favoritesList" class="favorites-list"></div>
       </div>
 
       <div class="status" id="status"></div>
@@ -93,7 +117,11 @@ const elements = {
   tableBody: document.querySelector('#tableBody'),
   count: document.querySelector('#count'),
   updated: document.querySelector('#updated'),
-  favoritesOnly: document.querySelector('#favoritesOnly')
+  favoritesOnly: document.querySelector('#favoritesOnly'),
+  favoritePicker: document.querySelector('#favoritePicker'),
+  addFavorite: document.querySelector('#addFavorite'),
+  clearFavorites: document.querySelector('#clearFavorites'),
+  favoritesList: document.querySelector('#favoritesList')
 }
 
 const API_BASE = 'https://pea-etf-proxy.vercel.app'
@@ -143,14 +171,47 @@ const saveFavorites = () => {
   localStorage.setItem(FAVORITES_KEY, JSON.stringify(state.favorites))
 }
 
+const normalizeSymbol = (value) => {
+  if (!value) return ''
+  const direct = etfData.find((item) => item.symbol === value)
+  if (direct) return direct.symbol
+  const byTicker = etfData.find((item) => item.ticker === value)
+  if (byTicker) return byTicker.symbol
+  return value
+}
+
 const toggleFavorite = (symbol) => {
-  if (state.favorites.includes(symbol)) {
-    state.favorites = state.favorites.filter((item) => item !== symbol)
+  const normalized = normalizeSymbol(symbol)
+  if (state.favorites.includes(normalized)) {
+    state.favorites = state.favorites.filter((item) => item !== normalized)
   } else {
-    state.favorites = [...state.favorites, symbol]
+    state.favorites = [...state.favorites, normalized]
   }
   saveFavorites()
   render()
+}
+
+const renderFavoritesList = () => {
+  if (!elements.favoritesList) return
+  if (state.favorites.length === 0) {
+    elements.favoritesList.innerHTML = '<span class="empty">Aucun favori.</span>'
+    return
+  }
+
+  const items = state.favorites
+    .map((symbol) => {
+      const match = state.etfs.find((item) => item.symbol === symbol)
+      if (!match) return ''
+      return `<span class="favorite-chip">${match.ticker || match.symbol} <button data-symbol="${match.symbol}">×</button></span>`
+    })
+    .join('')
+
+  elements.favoritesList.innerHTML = items
+  elements.favoritesList.querySelectorAll('button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      toggleFavorite(btn.dataset.symbol)
+    })
+  })
 }
 
 const setStatus = (message, tone = 'info') => {
@@ -219,6 +280,8 @@ const render = () => {
       toggleFavorite(symbol)
     })
   })
+
+  renderFavoritesList()
 }
 
 const fetchPeaList = async () => {
@@ -338,3 +401,20 @@ elements.favoritesOnly.addEventListener('change', () => render())
 loadFavorites()
 loadAll()
 scheduleRefresh()
+
+if (elements.addFavorite) {
+  elements.addFavorite.addEventListener('click', () => {
+    const value = elements.favoritePicker.value
+    if (!value) return
+    toggleFavorite(value)
+    elements.favoritePicker.value = ''
+  })
+}
+
+if (elements.clearFavorites) {
+  elements.clearFavorites.addEventListener('click', () => {
+    state.favorites = []
+    saveFavorites()
+    render()
+  })
+}

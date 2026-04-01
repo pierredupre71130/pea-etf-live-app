@@ -83,12 +83,12 @@ app.innerHTML = `
         <table>
           <thead>
             <tr>
-              <th>ETF</th>
-              <th>Code</th>
               <th>Ticker</th>
-              <th>ISIN</th>
               <th>Dernier</th>
               <th>Variation</th>
+              <th>ETF</th>
+              <th>Code</th>
+              <th>ISIN</th>
               <th>Heure</th>
               <th>Lien</th>
             </tr>
@@ -96,6 +96,7 @@ app.innerHTML = `
           <tbody id="tableBody"></tbody>
         </table>
       </div>
+      <div id="cardsContainer" class="cards"></div>
     </section>
 
     <footer class="footer">
@@ -131,7 +132,8 @@ const elements = {
   clearFavorites: document.querySelector('#clearFavorites'),
   favoritesList: document.querySelector('#favoritesList'),
   loadFavorites: document.querySelector('#loadFavorites'),
-  loadAll: document.querySelector('#loadAll')
+  loadAll: document.querySelector('#loadAll'),
+  cardsContainer: document.querySelector('#cardsContainer')
 }
 
 const API_BASE = 'https://pea-etf-proxy.vercel.app'
@@ -273,6 +275,9 @@ const render = () => {
 
       return `
         <tr>
+          <td>${item.ticker || '—'}</td>
+          <td>${quote ? formatNumber(quote.last, quote.tradingDecimals || 4) : '—'}</td>
+          <td class="${variationClass}">${quote ? formatPercent(quote.variation) : '—'}</td>
           <td>
             <button class="favorite-btn" data-symbol="${item.symbol}" aria-label="Favori">
               ${state.favorites.includes(item.symbol) ? '★' : '☆'}
@@ -280,16 +285,40 @@ const render = () => {
             ${item.name}
           </td>
           <td>${item.symbol}</td>
-          <td>${item.ticker || '—'}</td>
           <td>${item.isin || '—'}</td>
-          <td>${quote ? formatNumber(quote.last, quote.tradingDecimals || 4) : '—'}</td>
-          <td class="${variationClass}">${quote ? formatPercent(quote.variation) : '—'}</td>
           <td>${quote ? formatTime(quote.tradeDate) : '—'}</td>
           <td><a href="https://www.boursorama.com${item.href}" target="_blank" rel="noreferrer">Voir</a></td>
         </tr>
       `
     })
     .join('')
+
+  if (elements.cardsContainer) {
+    elements.cardsContainer.innerHTML = list
+      .map((item) => {
+        const quote = state.quotes.get(item.symbol)
+        const variation = quote?.variation
+        const variationClass =
+          variation > 0 ? 'up' : variation < 0 ? 'down' : 'flat'
+
+        return `
+          <div class="card-item">
+            <div class="card-header">
+              <span class="ticker">${item.ticker || item.symbol}</span>
+              <button class="favorite-btn" data-symbol="${item.symbol}" aria-label="Favori">
+                ${state.favorites.includes(item.symbol) ? '★' : '☆'}
+              </button>
+            </div>
+            <div class="card-price">${quote ? formatNumber(quote.last, quote.tradingDecimals || 4) : '—'}</div>
+            <div class="card-variation ${variationClass}">
+              ${quote ? formatPercent(quote.variation) : '—'}
+            </div>
+            <div class="card-name">${item.name}</div>
+          </div>
+        `
+      })
+      .join('')
+  }
 
   document.querySelectorAll('.favorite-btn').forEach((button) => {
     button.addEventListener('click', (event) => {
@@ -399,10 +428,12 @@ const loadFavoriteQuotes = () => {
     setStatus('Ajoute des favoris pour charger leurs cours.', 'error')
     return
   }
+  elements.favoritesOnly.checked = true
   setStatus(`Chargement des cours pour ${favoriteSymbols.length} favoris…`)
   fetchQuotes(favoriteSymbols).then(() => {
     state.lastUpdated = new Date()
     setStatus('Favoris à jour.', 'success')
+    render()
   })
 }
 
